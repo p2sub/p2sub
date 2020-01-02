@@ -1,14 +1,27 @@
+// Copyright 2019 Trần Anh Dũng <chiro@fkguru.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// 		http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package transaction
 
 import (
 	"crypto/ed25519"
-	"log"
 	"reflect"
 	"time"
 
 	"github.com/p2sub/p2sub/address"
-	"github.com/p2sub/p2sub/serialize"
-	"github.com/p2sub/p2sub/unserialize"
+	"github.com/p2sub/p2sub/logger"
+	"github.com/p2sub/p2sub/packer"
 )
 
 //Transaction basic t in the system
@@ -91,25 +104,26 @@ func (t *Transaction) IsMethod(methodType Method) bool {
 
 //Debug string
 func (t *Transaction) Debug() {
-	log.Printf("Singature: %x\n", t.Signature)
-	log.Printf("Flag: %x (BroadCast=%t, Private=%t, Sync=%t)\n",
+	sugar := logger.GetSugarLogger()
+	logger.HexDump("Transaction's signature:", t.Signature)
+	sugar.Debugf("Flag: %x (BroadCast=%t, Private=%t, Sync=%t)",
 		t.Flag,
 		t.IsFlag(Broadcast),
 		t.IsFlag(Private),
 		t.IsFlag(Sync))
-	log.Printf("Method: %d", t.Method)
-	log.Printf("From: %x\n", t.From)
+	sugar.Debugf("Method: %d", t.Method)
+	sugar.Debugf("From: %x", t.From)
 	if t.IsFlag(Private) {
-		log.Printf("To: %x\n", t.To)
+		sugar.Debugf("To: %x", t.To)
 	}
-	log.Printf("Time: %s\n", time.Unix(int64(t.Time), 0))
-	log.Printf("Length: %d\n", t.Length)
-	log.Printf("Data: %x\n", t.Data)
+	sugar.Debugf("Time: %s", time.Unix(int64(t.Time), 0))
+	sugar.Debugf("Length: %d", t.Length)
+	logger.HexDump("Data", t.Data)
 }
 
 //Serialize a t to serialized data
 func (t *Transaction) Serialize() []byte {
-	s := serialize.New()
+	s := packer.NewSerialize()
 	s.Write(t.Signature,
 		uint16(t.Flag), uint16(t.Method),
 		t.From,
@@ -145,7 +159,7 @@ func (t *Transaction) Verify() bool {
 func Unserialize(rawTx []byte) *Transaction {
 	//RawTx was too small
 	if len(rawTx) >= TxBroadcastSize {
-		u := unserialize.New(rawTx)
+		u := packer.NewUnserialize(rawTx)
 		var to []byte
 		var data []byte
 		signature := u.Pop(reflect.Slice, ed25519.SignatureSize).([]byte)

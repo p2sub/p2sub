@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"encoding/hex"
 	"sync"
 
 	"go.uber.org/zap"
@@ -30,4 +31,11 @@ func GetSugarLogger() *zap.SugaredLogger {
 		sugar = logger.Sugar()
 	})
 	return sugar
+}
+
+//HexDump for debug purpose
+func HexDump(title string, data []byte) {
+	sugar := GetSugarLogger()
+	content := hex.Dump(data)
+	sugar.Debugf("%s\n%s", title, content[:len(content)-1])
 }
