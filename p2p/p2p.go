@@ -15,18 +15,18 @@
 package p2p
 
 import (
-	"encoding/hex"
-	"errors"
 	"net"
 	"strings"
 
 	"github.com/p2sub/p2sub/logger"
+	"github.com/p2sub/p2sub/network"
 )
 
 //Peer handle connections between peer
 type Peer struct {
 	listener          net.Listener
 	bindAddress       string
+	addresses         []string
 	NewConnections    chan net.Conn
 	DeadConnections   chan net.Conn
 	ActivePeers       map[net.Conn]bool
@@ -43,41 +43,20 @@ const (
 	BufferSize  = 1024
 )
 
-func externalIP() (string, error) {
-	ifaces, err := net.Interfaces()
-	if err != nil {
-		return "", err
-	}
-	for _, iface := range ifaces {
-		if iface.Flags&net.FlagUp == 0 {
-			continue // interface down
-		}
-		if iface.Flags&net.FlagLoopback != 0 {
-			continue // loopback interface
-		}
-		addrs, err := iface.Addrs()
-		if err != nil {
-			return "", err
-		}
-		for _, addr := range addrs {
-			var ip net.IP
-			switch v := addr.(type) {
-			case *net.IPNet:
-				ip = v.IP
-			case *net.IPAddr:
-				ip = v.IP
-			}
-			if ip == nil || ip.IsLoopback() {
-				continue
-			}
-			if ipAddr := ip.String(); ipAddr == "" || ipAddr == "<nil>" {
-				continue
-			} else {
-				return ipAddr, nil
-			}
+func getIndexInSlice(slice []string, value string) int {
+	for i, v := range slice {
+		if v == value {
+			return i
 		}
 	}
-	return "", errors.New("Could find external IP address")
+	return -1
+}
+
+func getIPAddress(address string) string {
+	if i := strings.LastIndex(address, ":"); i >= 0 {
+		return strings.Trim(address[:i], "[]")
+	}
+	return "<nil>"
 }
 
 func getPort(address string) string {
@@ -88,27 +67,28 @@ func getPort(address string) string {
 }
 
 //CreatePeer create a new peer
-func CreatePeer(network, address string) *Peer {
+func CreatePeer(proto, address string) *Peer {
 	sugar := logger.GetSugarLogger()
-	listener, err := net.Listen(network, address)
-	ip, e := externalIP()
+	listener, err := net.Listen(proto, address)
 	port := getPort(address)
 	if err != nil {
-		sugar.Fatal("Not able to listen:", address, " protocol:", network, " error:", err)
-	}
-	if e != nil {
-		sugar.Fatal("Not able get external IP:", e)
+		sugar.Fatal("Not able to listen:", address, " protocol:", proto, " error:", err)
 	}
 	if port == "<nil>" || port == "" {
 		sugar.Fatal("Invalid listent port")
 	}
 	p := &Peer{listener: listener,
-		bindAddress:     ip + ":" + port,
+		bindAddress:     address,
 		NewConnections:  make(chan net.Conn, ChannelSize),
 		DeadConnections: make(chan net.Conn, ChannelSize),
 		ActivePeers:     make(map[net.Conn]bool),
 		DataChannel:     make(chan []byte, ChannelSize)}
-	sugar.Infof("Listening network: %s IP: %s port: %s", network, ip, port)
+	if addresses, err := network.ListAddress(); err == nil {
+		p.addresses = addresses
+	} else {
+		sugar.Fatal("Not able to list all IP addresses:", err)
+	}
+	sugar.Infof("Listening protocol %s bind to (%s)", proto, address)
 	return p
 }
 
@@ -143,9 +123,8 @@ func (p *Peer) HandleLoop() {
 			}
 			delete(p.ActivePeers, deadConnect)
 		case receivedData := <-p.DataChannel:
-			hexDump := hex.Dump(receivedData)
 			sugar.Debugf("Received  %d bytes of data", len(receivedData))
-			sugar.Debugf("Dumped data:\n%s", hexDump[:len(hexDump)-1])
+			logger.HexDump("Dumped data:", receivedData)
 			p.BroadCast(receivedData)
 		}
 	}
@@ -154,9 +133,16 @@ func (p *Peer) HandleLoop() {
 //Connect to another peer
 func (p *Peer) Connect(network, address string) {
 	sugar := logger.GetSugarLogger()
-	if p.bindAddress == address {
-		sugar.Infof("Skip loop connect -> %s", p.bindAddress)
-		return
+	bindIPAddress := getIPAddress(p.bindAddress)
+	bindPort := getPort(p.bindAddress)
+	targetIPAddress := getIPAddress(address)
+	targetPort := getPort(address)
+	if targetPort == bindPort {
+		if (bindIPAddress == targetIPAddress) ||
+			(getIndexInSlice(p.addresses, targetIPAddress) >= 0) {
+			sugar.Infof("Skip loop connect -> %s", address)
+			return
+		}
 	}
 	connect, err := net.Dial(network, address)
 	if err == nil {
