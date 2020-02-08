@@ -44,7 +44,7 @@ func (a *Address) GetBase58Address() string {
 	if vk := a.GetAddress(); vk != nil {
 		return base58.Encode(a.publicKey)
 	}
-	return ""
+	return "<nil>"
 }
 
 //IsSignKey is this address contain private key and able to sign transaction
