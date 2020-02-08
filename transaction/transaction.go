@@ -39,7 +39,7 @@ type Transaction struct {
 //Basic transaction size without data
 const (
 	TxBroadcastSize int = ed25519.SignatureSize + ed25519.PublicKeySize + 16
-	TxPrivateSize   int = ed25519.SignatureSize + 2*ed25519.PublicKeySize + 16
+	TxPrivateSize       = ed25519.SignatureSize + 2*ed25519.PublicKeySize + 16
 )
 
 //Flag flag for t

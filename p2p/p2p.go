@@ -39,8 +39,8 @@ type SmartCondition map[string]func()
 
 //Basic configuration
 const (
-	ChannelSize = 2
-	BufferSize  = 1024
+	ChannelSize uint = 2
+	BufferSize       = 1024
 )
 
 func getIndexInSlice(slice []string, value string) int {
@@ -93,7 +93,7 @@ func CreatePeer(proto, address string) *Peer {
 }
 
 //HandleLoop peer main loop
-func (p *Peer) HandleLoop() {
+func (p *Peer) HandleLoop(handler func(p *Peer, data []byte)) {
 	sugar := logger.GetSugarLogger()
 	for {
 		select {
@@ -125,7 +125,8 @@ func (p *Peer) HandleLoop() {
 		case receivedData := <-p.DataChannel:
 			sugar.Debugf("Received  %d bytes of data", len(receivedData))
 			logger.HexDump("Dumped data:", receivedData)
-			p.BroadCast(receivedData)
+			// Trigger handler
+			handler(p, receivedData)
 		}
 	}
 }
@@ -149,30 +150,6 @@ func (p *Peer) Connect(network, address string) {
 		p.NewConnections <- connect
 	} else {
 		sugar.Error("Not able to connect:", connect.RemoteAddr(), "X", connect.LocalAddr(), err)
-	}
-}
-
-//BroadCast messages to network
-func (p *Peer) BroadCast(data []byte) {
-	sugar := logger.GetSugarLogger()
-	sugar.Info("Active peers:", len(p.ActivePeers))
-	for connect, i := range p.ActivePeers {
-		if i {
-			go func(connect net.Conn) {
-				totalWritten := 0
-				for totalWritten < len(data) {
-					writtenThisCall, err := connect.Write(data[totalWritten:])
-					if err != nil {
-						p.DeadConnections <- connect
-						break
-					}
-					totalWritten += writtenThisCall
-				}
-				sugar.Info("Sent data:", connect.LocalAddr(), connect.RemoteAddr())
-			}(connect)
-		} else {
-			p.DeadConnections <- connect
-		}
 	}
 }
 
