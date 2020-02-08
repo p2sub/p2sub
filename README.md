@@ -1,6 +1,6 @@
 # Introduction
 
-Event-driven Architecture is a good idea to build an distributed system, instead of messing whole system with many duplicated requests. We could create a unique channel to deliver events and its data. When we try to explore pub/sub channel pattern, we are also find out, it has it own problems.
+Event-driven Architecture is a good idea to build a distributed system, instead of messing whole system with many duplicated requests. We could create a unified channel to deliver events and its data. When we try to explore pub/sub channel pattern, we are also find out it has it own problems.
 
 * Could not verify publisher
 * Could not create a verifiable private channel
