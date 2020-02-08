@@ -50,11 +50,11 @@ const (
 	Sync Flag = Flag((1 << iota) & 0xffff)
 	Ack
 	AckAck
-	Not
+	No
 	Rst
-	//Two of these flags won't be co-exist
+	Reject
+	//Is this package private
 	Private
-	Broadcast
 )
 
 //Method using in
@@ -80,6 +80,18 @@ func MakeFlag(flags ...Flag) Flag {
 		t |= uint16(flags[i])
 	}
 	return Flag(t)
+}
+
+//TurnOffFlag turn off a flag bit
+func TurnOffFlag(curFlag Flag, flag Flag) Flag {
+	c := uint16(curFlag)
+	f := uint16(flag)
+	return Flag((c | f) ^ f)
+}
+
+//TurnOnFlag turn on a flag bit
+func TurnOnFlag(curFlag Flag, flag Flag) Flag {
+	return Flag(uint16(curFlag) | uint16(flag))
 }
 
 //GetFlag get transaction flag
@@ -108,7 +120,7 @@ func (t *Transaction) Debug() {
 	logger.HexDump("Transaction's signature:", t.Signature)
 	sugar.Debugf("Flag: %x (BroadCast=%t, Private=%t, Sync=%t)",
 		t.Flag,
-		t.IsFlag(Broadcast),
+		!t.IsFlag(Private),
 		t.IsFlag(Private),
 		t.IsFlag(Sync))
 	sugar.Debugf("Method: %d", t.Method)

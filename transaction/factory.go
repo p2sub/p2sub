@@ -48,7 +48,7 @@ func New(from *address.Address, to *address.Address, flag Flag, method Method, d
 
 //NewBroardcast transaction
 func NewBroardcast(from *address.Address, flag Flag, method Method, data []byte) *Transaction {
-	return New(from, nil, flag|Broadcast, method, data)
+	return New(from, nil, TurnOffFlag(flag, Private), method, data)
 }
 
 //NewPrivate transaction
