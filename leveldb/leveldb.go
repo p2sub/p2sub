@@ -41,7 +41,7 @@ func NewErr(key []byte, err error) error {
 }
 
 func (e *Error) Error() string {
-	return fmt.Sprintf("Error: at Key: %s | Message: %s", e.Key, e.err.Error())
+	return fmt.Sprintf("Error at Key: %s | Message: %s", string(e.Key), e.err.Error())
 }
 
 // Close - close database connection
