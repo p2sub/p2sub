@@ -17,7 +17,7 @@ package packer
 import (
 	"bytes"
 	"encoding/binary"
-	"reflect"
+	"io"
 )
 
 //Unserialize struct to binary data
@@ -40,57 +40,79 @@ func (u *Unserialize) Size() int {
 	return int(u.buffer.Size())
 }
 
-//Pop new value to buffer
-func (u *Unserialize) Pop(kind reflect.Kind, size ...int) (result interface{}) {
+//ReadUint8 from buffer
+func (u *Unserialize) ReadUint8() (uint8, error) {
+	b, err := u.buffer.ReadByte()
+	if err == nil {
+		return uint8(b), err
+	}
+	return 0, err
+}
+
+//ReadUint16 from buffer
+func (u *Unserialize) ReadUint16() (uint16, error) {
+	buf := make([]byte, 2)
+	n, err := u.buffer.Read(buf)
+	if err == nil && n == 2 {
+		return binary.BigEndian.Uint16(buf), nil
+	}
+	return 0, err
+}
+
+//ReadUint32 from buffer
+func (u *Unserialize) ReadUint32() (uint32, error) {
+	buf := make([]byte, 4)
+	n, err := u.buffer.Read(buf)
+	if err == nil && n == 4 {
+		return binary.BigEndian.Uint32(buf), nil
+	}
+	return 0, err
+}
+
+//ReadUint64 from buffer
+func (u *Unserialize) ReadUint64() (uint64, error) {
+	buf := make([]byte, 8)
+	n, err := u.buffer.Read(buf)
+	if err == nil && n == 8 {
+		return binary.BigEndian.Uint64(buf), nil
+	}
+	return 0, err
+}
+
+//ReadString from buffer
+func (u *Unserialize) ReadString(size ...int) (string, error) {
+	if u.buffer.Len() == 0 {
+		return "", io.EOF
+	}
 	resultLen := 0
 	if len(size) == 0 {
 		resultLen = u.buffer.Len()
 	} else {
 		resultLen = size[0]
 	}
-	switch kind {
-	case reflect.Uint8:
-		if b, err := u.buffer.ReadByte(); err == nil {
-			result = b
+	tmp := ""
+	for i := 0; u.buffer.Len() > 0 && i < resultLen; i++ {
+		if b, err := u.buffer.ReadByte(); b != 0 && err == nil {
+			tmp += string(b)
+		} else {
+			return tmp, err
 		}
-		break
-	case reflect.Uint16:
-		buf := make([]byte, 2)
-		if n, err := u.buffer.Read(buf); err == nil && n == 2 {
-			result = binary.BigEndian.Uint16(buf)
-		}
-		break
-	case reflect.Uint32:
-		buf := make([]byte, 4)
-		if n, err := u.buffer.Read(buf); err == nil && n == 4 {
-			result = binary.BigEndian.Uint32(buf)
-		}
-		break
-	case reflect.Uint64:
-		buf := make([]byte, 8)
-		if n, err := u.buffer.Read(buf); err == nil && n == 8 {
-			result = binary.BigEndian.Uint64(buf)
-		}
-		break
-	//Read ulti null byte
-	case reflect.String:
-		tmp := ""
-		for i := 0; u.buffer.Len() > 0 && i < resultLen; i++ {
-			if b, err := u.buffer.ReadByte(); b != 0 && err == nil {
-				tmp += string(b)
-			} else {
-				break
-			}
-		}
-		result = tmp
-		break
-	case reflect.Slice:
-		buf := make([]byte, resultLen)
-		if n, err := u.buffer.Read(buf); err == nil && n == resultLen {
-			result = buf
-		}
-		break
-	default:
 	}
-	return
+	return tmp, nil
+}
+
+//ReadBytes from buffer
+func (u *Unserialize) ReadBytes(size ...int) ([]byte, error) {
+	resultLen := 0
+	if len(size) == 0 {
+		resultLen = u.buffer.Len()
+	} else {
+		resultLen = size[0]
+	}
+	buf := make([]byte, resultLen)
+	n, err := u.buffer.Read(buf)
+	if err == nil && n == resultLen {
+		return buf, nil
+	}
+	return nil, err
 }

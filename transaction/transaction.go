@@ -16,7 +16,6 @@ package transaction
 
 import (
 	"crypto/ed25519"
-	"reflect"
 	"time"
 
 	"github.com/p2sub/p2sub/address"
@@ -26,14 +25,14 @@ import (
 
 //Transaction basic t in the system
 type Transaction struct {
-	Signature []byte
-	Flag      Flag
-	Method    Method
-	From      []byte
-	To        []byte
-	Time      uint64
-	Length    uint32
-	Data      []byte
+	Signature []byte //64
+	Flag      Flag   //2
+	Method    Method //2
+	From      []byte //32
+	To        []byte //32
+	Time      uint64 //8
+	Length    uint32 //4
+	Data      []byte //?
 }
 
 //Basic transaction size without data
@@ -174,25 +173,25 @@ func Unserialize(rawTx []byte) *Transaction {
 		u := packer.NewUnserialize(rawTx)
 		var to []byte
 		var data []byte
-		signature := u.Pop(reflect.Slice, ed25519.SignatureSize).([]byte)
-		flag := u.Pop(reflect.Uint16).(uint16)
-		method := u.Pop(reflect.Uint16).(uint16)
-		from := u.Pop(reflect.Slice, ed25519.PublicKeySize).([]byte)
+		signature, _ := u.ReadBytes(ed25519.SignatureSize)
+		flag, _ := u.ReadUint16()
+		method, _ := u.ReadUint16()
+		from, _ := u.ReadBytes(ed25519.PublicKeySize)
 		if flag&uint16(Private) > 0 {
 			//Transaction is private but have size smaller
 			//than basic private transaction
 			if u.Size() < TxPrivateSize {
 				return nil
 			}
-			to = u.Pop(reflect.Slice, ed25519.PublicKeySize).([]byte)
+			to, _ = u.ReadBytes(ed25519.PublicKeySize)
 		} else {
 			to = nil
 		}
-		time := u.Pop(reflect.Uint64).(uint64)
-		length := u.Pop(reflect.Uint32).(uint32)
+		time, _ := u.ReadUint64()
+		length, _ := u.ReadUint32()
 		//Remaining bytes should larger than required
 		if length <= uint32(u.Len()) {
-			if b, ok := u.Pop(reflect.Slice, int(length)).([]byte); ok {
+			if b, err := u.ReadBytes(int(length)); err == nil {
 				data = b
 			} else {
 				data = nil
