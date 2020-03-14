@@ -26,6 +26,12 @@ type Address struct {
 	privateKey ed25519.PrivateKey
 }
 
+//Address constant
+const (
+	SignatureSize   = 64
+	NullMessageSize = 0
+)
+
 //GetAddress get public key of key pair
 func (a *Address) GetAddress() []byte {
 	if a.publicKey != nil && len(a.publicKey) == ed25519.PublicKeySize {
@@ -54,7 +60,7 @@ func (a *Address) IsSignKey() bool {
 
 //Sign sign a message
 func (a *Address) Sign(message []byte) []byte {
-	if a.IsSignKey() {
+	if a.IsSignKey() && len(message) > NullMessageSize {
 		signature := ed25519.Sign(a.privateKey, message)
 		signedMessage := make([]byte, len(message)+ed25519.SignatureSize)
 		copy(signedMessage[:ed25519.SignatureSize], signature[:])
@@ -66,7 +72,7 @@ func (a *Address) Sign(message []byte) []byte {
 
 //Verify signed a message
 func (a *Address) Verify(signedMessage []byte) bool {
-	if vk := a.GetAddress(); vk != nil {
+	if vk := a.GetAddress(); vk != nil && len(signedMessage) > SignatureSize {
 		signature := make([]byte, ed25519.SignatureSize)
 		message := make([]byte, len(signedMessage)-ed25519.SignatureSize)
 		copy(signature[:], signedMessage[:ed25519.SignatureSize])
