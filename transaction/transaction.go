@@ -16,7 +16,6 @@ package transaction
 
 import (
 	"crypto/ed25519"
-	"reflect"
 	"time"
 
 	"github.com/p2sub/p2sub/address"
@@ -26,14 +25,14 @@ import (
 
 //Transaction basic t in the system
 type Transaction struct {
-	Signature []byte
-	Flag      Flag
-	Method    Method
-	From      []byte
-	To        []byte
-	Time      uint64
-	Length    uint32
-	Data      []byte
+	Signature []byte //64
+	Flag      Flag   //2
+	Method    Method //2
+	From      []byte //32
+	To        []byte //32
+	Time      uint64 //8
+	Length    uint32 //4
+	Data      []byte //?
 }
 
 //Basic transaction size without data
@@ -50,11 +49,11 @@ const (
 	Sync Flag = Flag((1 << iota) & 0xffff)
 	Ack
 	AckAck
-	Not
+	No
 	Rst
-	//Two of these flags won't be co-exist
+	Reject
+	//Is this package private
 	Private
-	Broadcast
 )
 
 //Method using in
@@ -80,6 +79,18 @@ func MakeFlag(flags ...Flag) Flag {
 		t |= uint16(flags[i])
 	}
 	return Flag(t)
+}
+
+//TurnOffFlag turn off a flag bit
+func TurnOffFlag(curFlag Flag, flag Flag) Flag {
+	c := uint16(curFlag)
+	f := uint16(flag)
+	return Flag((c | f) ^ f)
+}
+
+//TurnOnFlag turn on a flag bit
+func TurnOnFlag(curFlag Flag, flag Flag) Flag {
+	return Flag(uint16(curFlag) | uint16(flag))
 }
 
 //GetFlag get transaction flag
@@ -108,7 +119,7 @@ func (t *Transaction) Debug() {
 	logger.HexDump("Transaction's signature:", t.Signature)
 	sugar.Debugf("Flag: %x (BroadCast=%t, Private=%t, Sync=%t)",
 		t.Flag,
-		t.IsFlag(Broadcast),
+		!t.IsFlag(Private),
 		t.IsFlag(Private),
 		t.IsFlag(Sync))
 	sugar.Debugf("Method: %d", t.Method)
@@ -162,25 +173,25 @@ func Unserialize(rawTx []byte) *Transaction {
 		u := packer.NewUnserialize(rawTx)
 		var to []byte
 		var data []byte
-		signature := u.Pop(reflect.Slice, ed25519.SignatureSize).([]byte)
-		flag := u.Pop(reflect.Uint16).(uint16)
-		method := u.Pop(reflect.Uint16).(uint16)
-		from := u.Pop(reflect.Slice, ed25519.PublicKeySize).([]byte)
+		signature, _ := u.ReadBytes(ed25519.SignatureSize)
+		flag, _ := u.ReadUint16()
+		method, _ := u.ReadUint16()
+		from, _ := u.ReadBytes(ed25519.PublicKeySize)
 		if flag&uint16(Private) > 0 {
 			//Transaction is private but have size smaller
 			//than basic private transaction
 			if u.Size() < TxPrivateSize {
 				return nil
 			}
-			to = u.Pop(reflect.Slice, ed25519.PublicKeySize).([]byte)
+			to, _ = u.ReadBytes(ed25519.PublicKeySize)
 		} else {
 			to = nil
 		}
-		time := u.Pop(reflect.Uint64).(uint64)
-		length := u.Pop(reflect.Uint32).(uint32)
+		time, _ := u.ReadUint64()
+		length, _ := u.ReadUint32()
 		//Remaining bytes should larger than required
 		if length <= uint32(u.Len()) {
-			if b, ok := u.Pop(reflect.Slice, int(length)).([]byte); ok {
+			if b, err := u.ReadBytes(int(length)); err == nil {
 				data = b
 			} else {
 				data = nil
