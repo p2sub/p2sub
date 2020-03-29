@@ -21,6 +21,18 @@ In the try to improve pub/sub pattern, we created P2SUB. It is a brand new distr
 * **Transaction Based**: _All message will be treated like transaction_
 * **No Single Point of Failure**: _Instead of centralized queue or service, we use blockchain as its backbone_
 
+## Development
+
+You could generate your own node identities by run this command
+
+```bash
+$ go run ./cmd/configuration/configuration.go
+```
+
+Configuration will be appear in `./conf.d`
+
+**note:** After alpha stage we won't use configuration file anymore.
+
 ## License
 
 P2SUB is licensed under [Apache License 2.0](https://github.com/chiro-hiro/p2sub/blob/master/LICENSE)

@@ -1,4 +1,4 @@
-// Copyright 2019 Trần Anh Dũng <chiro@fkguru.com>
+// Copyright 2019 P2Sub Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,6 +31,22 @@ const (
 	SignatureSize   = 64
 	NullMessageSize = 0
 )
+
+//GetPrivateKey Get private key to export configuration
+func (a *Address) GetPrivateKey() []byte {
+	if a.privateKey != nil {
+		return a.privateKey
+	}
+	return nil
+}
+
+//GetSeed Get seed  to export configuration
+func (a *Address) GetSeed() []byte {
+	if a.privateKey != nil {
+		return a.privateKey.Seed()
+	}
+	return nil
+}
 
 //GetAddress get public key of key pair
 func (a *Address) GetAddress() []byte {
