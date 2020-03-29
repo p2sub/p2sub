@@ -24,10 +24,11 @@ func TestWrite(t *testing.T) {
 		uint8(0xff),
 		uint16(0xffaa),
 		[]byte{255, 255, 255},
-		"Hello! I'm Mary")
+		"Hello! I'm Mary",
+		"Hello! Chiro here")
 	got := hex.EncodeToString(serialized.Bytes())
-	if got != "1122334455667788aabbccddffffaaffffff48656c6c6f212049276d204d617279" {
-		t.Errorf("serialized.Write(...) = %s; want 1122334455667788aabbccddffffaaffffff48656c6c6f212049276d204d617279", got)
+	if got != "1122334455667788aabbccddffffaaffffff48656c6c6f212049276d204d61727948656c6c6f2120436869726f2068657265" {
+		t.Errorf("serialized.Write(...) = %s; want 1122334455667788aabbccddffffaaffffff48656c6c6f212049276d204d61727948656c6c6f2120436869726f2068657265", got)
 	}
 }
 

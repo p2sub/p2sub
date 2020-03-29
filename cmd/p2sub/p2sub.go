@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/p2sub/p2sub/address"
-	"github.com/p2sub/p2sub/configuration"
 	"github.com/p2sub/p2sub/logger"
 	"github.com/p2sub/p2sub/transaction"
 )
@@ -31,20 +30,21 @@ func main() {
 	tx2.Debug()
 	sugar.Info("Is the same? ", bytes.Compare(tx1.Serialize(), tx2.Serialize()) == 0)
 	sugar.Infof("Took: %s", time.Since(start))
-	var confs configuration.Configs
-	confs = append(confs, configuration.ConfigItem{
-		Name:      "chiro-node-0",
-		Address:   "some-address-0",
-		Signature: "test-signature-0",
-	})
-	confs = append(confs, configuration.ConfigItem{
-		Name:      "chiro-node-1",
-		Address:   "some-address-1",
-		Signature: "test-signature-1",
-	})
-	if confs.Export("./test.json") {
-		if conf := configuration.Import("./test.json"); conf != nil {
-			sugar.Debug("Configuration", conf.ToString())
-		}
-	}
+	/*
+		var confs configuration.Configs
+		confs = append(confs, configuration.ConfigItem{
+			Name:      "chiro-node-0",
+			PublicKey: "some-address-0",
+			Signature: "test-signature-0",
+		})
+		confs = append(confs, configuration.ConfigItem{
+			Name:      "chiro-node-1",
+			PublicKey: "some-address-1",
+			Signature: "test-signature-1",
+		})
+		if confs.Export("./test.json") {
+			if conf := configuration.Import("./test.json"); conf != nil {
+				sugar.Debug("Configuration", conf.ToString())
+			}
+		}*/
 }

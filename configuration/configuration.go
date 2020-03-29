@@ -1,44 +1,69 @@
 package configuration
 
 import (
+	"encoding/hex"
 	"encoding/json"
-	"io/ioutil"
 	"os"
+	"strconv"
+
+	"github.com/p2sub/p2sub/address"
 )
 
-//ConfigItem confuguration structure
-type ConfigItem struct {
+const (
+	//NodeNotary issue certificate and configuration
+	NodeNotary uint32 = iota
+	//NodeMaster create blocks
+	NodeMaster
+	//NodeSlaver sync with blockchain
+	NodeSlaver
+	//NodeObserver only observe
+	NodeObserver
+)
+
+var nodeStr = map[uint32]string{
+	NodeNotary:   "notary",
+	NodeMaster:   "master",
+	NodeSlaver:   "slaver",
+	NodeObserver: "observer",
+}
+var nodeUint = map[string]uint32{
+	"notary":   NodeNotary,
+	"master":   NodeMaster,
+	"slaver":   NodeSlaver,
+	"observer": NodeObserver,
+}
+
+//ConfigJSON confuguration structure
+type ConfigJSON struct {
 	Name          string `json:"name"`
-	Address       string `json:"address"`
+	BindHost      string `json:"host"`
+	BindPort      string `json:"port"`
+	PrivateKey    string `json:"privateKey"`
+	PublicKey     string `json:"publicKey"`
+	NodeType      string `json:"nodeType"`
 	Nonce         string `json:"nonce"`
 	Signature     string `json:"signature"`
 	ConfigSerivce string `json:"configService"`
 }
 
-//Configs array of ConfigItem
-type Configs []ConfigItem
-
-//Import configuration from file
-func Import(filename string) *Configs {
-	file, err := os.Open(filename)
-	defer file.Close()
-	if err == nil {
-		if data, err := ioutil.ReadAll(file); err == nil {
-			config := &Configs{}
-			if json.Unmarshal(data, config) == nil {
-				return config
-			}
-		}
-	}
-	return nil
+//Config indexed in memory
+type Config struct {
+	Name          string
+	BindPort      string
+	BindHost      string
+	NodeAddress   address.Address
+	Nonce         uint32
+	NodeType      uint32
+	Signature     []byte
+	ConfigSerivce string
 }
 
 //Export configuration to file
-func (c *Configs) Export(filename string) bool {
+func (conf *Config) Export(filename string) bool {
 	file, err := os.Create(filename)
 	defer file.Close()
 	if err == nil {
-		if data, err := json.Marshal(c); err == nil {
+		if data, err := json.Marshal(conf.ToJSON()); err == nil {
 			if n, err := file.Write(data); n == len(data) && err == nil {
 				return true
 			}
@@ -47,10 +72,46 @@ func (c *Configs) Export(filename string) bool {
 	return false
 }
 
+//ToJSON memory to ConfigJSON
+func (conf *Config) ToJSON() *ConfigJSON {
+	return &ConfigJSON{
+		Name:          conf.Name,
+		BindHost:      conf.BindHost,
+		BindPort:      conf.BindPort,
+		PrivateKey:    hex.EncodeToString(conf.NodeAddress.GetPrivateKey()),
+		PublicKey:     hex.EncodeToString(conf.NodeAddress.GetAddress()),
+		NodeType:      nodeStr[conf.NodeType],
+		Nonce:         strconv.FormatUint(uint64(conf.Nonce), 10),
+		Signature:     hex.EncodeToString(conf.Signature),
+		ConfigSerivce: conf.ConfigSerivce,
+	}
+}
+
+//ToConfig json structure to memory config
+func (confJSON *ConfigJSON) ToConfig() *Config {
+	if vk, err := hex.DecodeString(confJSON.PrivateKey); err == nil {
+		if nonce, err1 := strconv.ParseUint(confJSON.Nonce, 10, 32); err1 == nil {
+			if signature, err2 := hex.DecodeString(confJSON.Signature); err2 == nil {
+				return &Config{
+					Name:          confJSON.Name,
+					BindHost:      confJSON.BindHost,
+					BindPort:      confJSON.BindPort,
+					NodeAddress:   *address.FromPrivateKey(vk),
+					Nonce:         uint32(nonce),
+					NodeType:      nodeUint[confJSON.NodeType],
+					Signature:     signature,
+					ConfigSerivce: confJSON.ConfigSerivce,
+				}
+			}
+		}
+	}
+	return nil
+}
+
 //ToString convert configuration to string
-func (c *Configs) ToString() string {
-	if data, err := json.Marshal(c); err == nil {
+func (confJSON *ConfigJSON) ToString() string {
+	if data, err := json.Marshal(confJSON); err == nil {
 		return string(data)
 	}
-	return "<nil>"
+	return "{}"
 }
