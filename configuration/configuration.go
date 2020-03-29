@@ -1,11 +1,11 @@
 package configuration
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"os"
 	"strconv"
 
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/p2sub/p2sub/address"
 )
 
@@ -38,12 +38,12 @@ type ConfigJSON struct {
 	Name          string `json:"name"`
 	BindHost      string `json:"host"`
 	BindPort      string `json:"port"`
-	PrivateKey    string `json:"privateKey"`
-	PublicKey     string `json:"publicKey"`
+	Seed          string `json:"seed"`
+	Issuer        string `json:"issuer"`
 	NodeType      string `json:"nodeType"`
 	Nonce         string `json:"nonce"`
 	Signature     string `json:"signature"`
-	ConfigSerivce string `json:"configService"`
+	ConfigService string `json:"configService"`
 }
 
 //Config indexed in memory
@@ -52,10 +52,11 @@ type Config struct {
 	BindPort      string
 	BindHost      string
 	NodeAddress   address.Address
+	Issuer        []byte
 	Nonce         uint32
 	NodeType      uint32
 	Signature     []byte
-	ConfigSerivce string
+	ConfigService string
 }
 
 //Export configuration to file
@@ -63,7 +64,7 @@ func (conf *Config) Export(filename string) bool {
 	file, err := os.Create(filename)
 	defer file.Close()
 	if err == nil {
-		if data, err := json.Marshal(conf.ToJSON()); err == nil {
+		if data, err := json.MarshalIndent(conf.ToJSON(), "", "  "); err == nil {
 			if n, err := file.Write(data); n == len(data) && err == nil {
 				return true
 			}
@@ -78,32 +79,33 @@ func (conf *Config) ToJSON() *ConfigJSON {
 		Name:          conf.Name,
 		BindHost:      conf.BindHost,
 		BindPort:      conf.BindPort,
-		PrivateKey:    hex.EncodeToString(conf.NodeAddress.GetPrivateKey()),
-		PublicKey:     hex.EncodeToString(conf.NodeAddress.GetAddress()),
+		Seed:          base58.Encode(conf.NodeAddress.GetSeed()),
 		NodeType:      nodeStr[conf.NodeType],
 		Nonce:         strconv.FormatUint(uint64(conf.Nonce), 10),
-		Signature:     hex.EncodeToString(conf.Signature),
-		ConfigSerivce: conf.ConfigSerivce,
+		Signature:     base58.Encode(conf.Signature),
+		Issuer:        base58.Encode(conf.Issuer),
+		ConfigService: conf.ConfigService,
 	}
 }
 
 //ToConfig json structure to memory config
 func (confJSON *ConfigJSON) ToConfig() *Config {
-	if vk, err := hex.DecodeString(confJSON.PrivateKey); err == nil {
-		if nonce, err1 := strconv.ParseUint(confJSON.Nonce, 10, 32); err1 == nil {
-			if signature, err2 := hex.DecodeString(confJSON.Signature); err2 == nil {
-				return &Config{
-					Name:          confJSON.Name,
-					BindHost:      confJSON.BindHost,
-					BindPort:      confJSON.BindPort,
-					NodeAddress:   *address.FromPrivateKey(vk),
-					Nonce:         uint32(nonce),
-					NodeType:      nodeUint[confJSON.NodeType],
-					Signature:     signature,
-					ConfigSerivce: confJSON.ConfigSerivce,
-				}
-			}
+	if nonce, err1 := strconv.ParseUint(confJSON.Nonce, 10, 32); err1 == nil {
+		tmpConfig := &Config{
+			Name:          confJSON.Name,
+			BindHost:      confJSON.BindHost,
+			BindPort:      confJSON.BindPort,
+			NodeAddress:   *address.FromSeed(base58.Decode(confJSON.Seed)),
+			Nonce:         uint32(nonce),
+			NodeType:      nodeUint[confJSON.NodeType],
+			Signature:     base58.Decode(confJSON.Signature),
+			ConfigService: confJSON.ConfigService,
 		}
+		if tmpConfig.Issuer != nil {
+			tmpConfig.Issuer = base58.Decode(confJSON.Issuer)
+		}
+		return tmpConfig
+
 	}
 	return nil
 }

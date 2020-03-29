@@ -40,6 +40,14 @@ func (a *Address) GetPrivateKey() []byte {
 	return nil
 }
 
+//GetSeed Get seed  to export configuration
+func (a *Address) GetSeed() []byte {
+	if a.privateKey != nil {
+		return a.privateKey.Seed()
+	}
+	return nil
+}
+
 //GetAddress get public key of key pair
 func (a *Address) GetAddress() []byte {
 	if a.publicKey != nil && len(a.publicKey) == ed25519.PublicKeySize {
