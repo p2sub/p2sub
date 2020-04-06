@@ -1,4 +1,4 @@
-// Copyright 2019 Trần Anh Dũng <chiro@fkguru.com>
+// Copyright 2019 P2Sub Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,6 +24,28 @@ import (
 type Address struct {
 	publicKey  ed25519.PublicKey
 	privateKey ed25519.PrivateKey
+}
+
+//Address constant
+const (
+	SignatureSize   = 64
+	NullMessageSize = 0
+)
+
+//GetPrivateKey Get private key to export configuration
+func (a *Address) GetPrivateKey() []byte {
+	if a.privateKey != nil {
+		return a.privateKey
+	}
+	return nil
+}
+
+//GetSeed Get seed  to export configuration
+func (a *Address) GetSeed() []byte {
+	if a.privateKey != nil {
+		return a.privateKey.Seed()
+	}
+	return nil
 }
 
 //GetAddress get public key of key pair
@@ -54,7 +76,7 @@ func (a *Address) IsSignKey() bool {
 
 //Sign sign a message
 func (a *Address) Sign(message []byte) []byte {
-	if a.IsSignKey() {
+	if a.IsSignKey() && len(message) > NullMessageSize {
 		signature := ed25519.Sign(a.privateKey, message)
 		signedMessage := make([]byte, len(message)+ed25519.SignatureSize)
 		copy(signedMessage[:ed25519.SignatureSize], signature[:])
@@ -66,7 +88,7 @@ func (a *Address) Sign(message []byte) []byte {
 
 //Verify signed a message
 func (a *Address) Verify(signedMessage []byte) bool {
-	if vk := a.GetAddress(); vk != nil {
+	if vk := a.GetAddress(); vk != nil && len(signedMessage) > SignatureSize {
 		signature := make([]byte, ed25519.SignatureSize)
 		message := make([]byte, len(signedMessage)-ed25519.SignatureSize)
 		copy(signature[:], signedMessage[:ed25519.SignatureSize])

@@ -1,4 +1,4 @@
-// Copyright 2019 Trần Anh Dũng <chiro@fkguru.com>
+// Copyright 2019 P2Sub Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -66,4 +66,13 @@ func FromHexSeed(seed string) *Address {
 		return FromSeed(s)
 	}
 	return nil
+}
+
+//FromPrivateKey create new address from private key
+func FromPrivateKey(pk []byte) *Address {
+	a := Address{
+		privateKey: pk,
+	}
+	a.publicKey = a.GetAddress()
+	return &a
 }

@@ -1,4 +1,4 @@
-// Copyright 2019 Trần Anh Dũng <chiro@fkguru.com>
+// Copyright 2019 P2Sub Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ func New(from *address.Address, to *address.Address, flag Flag, method Method, d
 
 //NewBroardcast transaction
 func NewBroardcast(from *address.Address, flag Flag, method Method, data []byte) *Transaction {
-	return New(from, nil, flag|Broadcast, method, data)
+	return New(from, nil, TurnOffFlag(flag, Private), method, data)
 }
 
 //NewPrivate transaction

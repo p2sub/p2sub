@@ -1,0 +1,11 @@
+{
+  "name": "notary1",
+  "host": "127.0.0.1",
+  "port": "6001",
+  "seed": "DkMTe35s5oqVbKAHRE44sHk8knFMaNimJa1jZpsmyBd7",
+  "issuer": "",
+  "nodeType": "notary",
+  "nonce": "1432518515",
+  "signature": "",
+  "configService": "127.0.0.1:6001"
+}

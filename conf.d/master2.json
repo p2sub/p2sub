@@ -1,0 +1,11 @@
+{
+  "name": "master2",
+  "host": "127.0.0.1",
+  "port": "6012",
+  "seed": "HvVvGzZRjuBiAo3oUSymdrUwikv4Z9RoxrAg3EQUd1p5",
+  "issuer": "Dm8KmPkLCCksARDj2Sq5VrxqGfERzANoKyEUb3SdQC6C",
+  "nodeType": "master",
+  "nonce": "3148201956",
+  "signature": "5ZDXzstsbHKRuSKUcVc2yf6qgAj63kZf727kuXx5HkREDNX9QrmD5gucG8AuAWzneKEBVMM8pKNHJgn5oDsNvrBB",
+  "configService": "127.0.0.1:6001"
+}

@@ -16,7 +16,7 @@ func main() {
 	sender := address.FromHexSeed("6578f93ce65b0c9d3bb578adc61d0092a62f340f9c342c9dd747731308ca32e5")
 	message := "Hello world, I'm Chiro"
 	tx1 := transaction.NewBroardcast(sender,
-		transaction.MakeFlag(transaction.Broadcast, transaction.Sync, transaction.Ack),
+		transaction.MakeFlag(transaction.Sync, transaction.Ack),
 		transaction.Ping,
 		[]byte(message))
 	logger.HexDump("Unsigned transaction 1:", tx1.Serialize())
@@ -30,4 +30,21 @@ func main() {
 	tx2.Debug()
 	sugar.Info("Is the same? ", bytes.Compare(tx1.Serialize(), tx2.Serialize()) == 0)
 	sugar.Infof("Took: %s", time.Since(start))
+	/*
+		var confs configuration.Configs
+		confs = append(confs, configuration.ConfigItem{
+			Name:      "chiro-node-0",
+			PublicKey: "some-address-0",
+			Signature: "test-signature-0",
+		})
+		confs = append(confs, configuration.ConfigItem{
+			Name:      "chiro-node-1",
+			PublicKey: "some-address-1",
+			Signature: "test-signature-1",
+		})
+		if confs.Export("./test.json") {
+			if conf := configuration.Import("./test.json"); conf != nil {
+				sugar.Debug("Configuration", conf.ToString())
+			}
+		}*/
 }
