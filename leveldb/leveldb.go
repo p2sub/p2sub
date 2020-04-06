@@ -88,8 +88,8 @@ func (mgr *Manager) GetAllItems() (listItems []Item, err error) {
 	return listItems, err 
 }
 
-// NewManager - create new leveldb database instance
-func NewManager(path string, options *opt.Options) (manager *Manager, err error) {
+// New - create new leveldb database manager instance
+func New(path string, options *opt.Options) (manager *Manager, err error) {
 	db, err := leveldb.OpenFile(path, options)
 	if err != nil {
 		return nil, err

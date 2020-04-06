@@ -14,7 +14,7 @@ func main() {
 		Key: []byte("key-2"),
 		Value: []byte("Value 1"),
 	}
-	lvlManager, err := leveldb.NewManager("./db", nil)
+	lvlManager, err := leveldb.New("./db", nil)
 	defer lvlManager.Close()
 	if err != nil {
 		log.Fatal(err)
