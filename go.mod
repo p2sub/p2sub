@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/btcsuite/btcutil v1.0.1
+	github.com/petar/GoLLRB v0.0.0-20190514000832-33fb24c13b99
 	github.com/sqs/goreturns v0.0.0-20181028201513-538ac6014518 // indirect
 	go.uber.org/zap v1.14.1
 )
