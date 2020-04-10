@@ -2,16 +2,41 @@ package main
 
 import (
 	"bytes"
+	"encoding/hex"
+	"fmt"
 	"time"
 
 	"github.com/p2sub/p2sub/address"
+	"github.com/p2sub/p2sub/llrbmerkle"
 	"github.com/p2sub/p2sub/logger"
+	"github.com/p2sub/p2sub/merkle"
 	"github.com/p2sub/p2sub/transaction"
+	"github.com/p2sub/p2sub/utilities"
 )
 
 func main() {
+	lt := llrbmerkle.New()
+	lt.InsertHash(utilities.FastSha256([]byte("String 1")))
+	lt.InsertHash(utilities.FastSha256([]byte("String 2")))
+	lt.InsertHash(utilities.FastSha256([]byte("String 3")))
+	lt.InsertHash(utilities.FastSha256([]byte("String 4")))
+	lt.InsertHash(utilities.FastSha256([]byte("String 4")))
+	lt.CalculateMerkle()
+	lt.MerkleTree.PrintTree()
+
+	t := merkle.New()
+	t.AppendData([]byte("Hello!"))
+	t.AppendData([]byte("I'm Chiro,"))
+	t.AppendData([]byte("This one is simple merkle tree"))
+	t.AppendData([]byte("It was implemented in Go"))
+	t.AppendData([]byte("Thanks,"))
+	t.Calculate()
+	t.PrintTree()
+	fmt.Printf("\nRoot is: %s\n", hex.EncodeToString(t.Root.Digest)[:16])
+
 	sugar := logger.GetSugarLogger()
 	start := time.Now()
+	fmt.Println(utilities.FastSha256([]byte("Chiro")))
 	//7zGCDka9k2cooRWPTBtPjLQMsLE5UdhoFUwzaMyw7DkQ
 	sender := address.FromHexSeed("6578f93ce65b0c9d3bb578adc61d0092a62f340f9c342c9dd747731308ca32e5")
 	message := "Hello world, I'm Chiro"
