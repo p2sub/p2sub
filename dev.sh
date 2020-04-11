@@ -1,15 +1,40 @@
 #!/usr/bin/env sh
-P2SUB_SOURCE=$(pwd)
-P2SUB_GOPATH=$GOPATH/src/github.com/p2sub
-go get github.com/btcsuite/btcutil/base58
-go get go.uber.org/zap
-mkdir -p $P2SUB_GOPATH
-P2SUB_SYMLINK=$P2SUB_GOPATH/p2sub
-if [[ -L "$P2SUB_SYMLINK" ]]; then
-  rm "$P2SUB_SYMLINK"
-fi
-if [[ ! -L "$P2SUB_SYMLINK" ]]; then
-  echo "Linked $P2SUB_SYMLINK -> $P2SUB_SOURCE"
-  ln -s $(pwd) $P2SUB_SYMLINK
-fi
-go run ./cmd/p2sub/p2sub.go
+
+case $1 in
+  
+  build)
+    echo "Run build all project"
+    go build -o ./build/configuration ./cmd/configuration/configuration.go
+    go build -o ./build/p2sub ./cmd/p2sub/p2sub.go
+    ;;
+
+  config)
+    echo "Run configuration, generate new config file in conf.d"
+    go run ./cmd/configuration/configuration.go
+    ;;
+
+  master1)
+    echo "Run master 1"
+    go run ./cmd/p2sub/p2sub.go --config ./conf.d/master1.json
+    ;;
+
+  master2)
+    echo "Run master 2"
+    go run ./cmd/p2sub/p2sub.go --config ./conf.d/master2.json
+    ;;
+
+  master3)
+    echo "Run master 3"
+    go run ./cmd/p2sub/p2sub.go --config ./conf.d/master3.json
+    ;;
+
+  notary)
+    echo "Run notary"
+    go run ./cmd/p2sub/p2sub.go --config ./conf.d/notary.json
+    ;;
+
+  *)
+    echo "This wasn't defined";
+    exit 1
+    ;;
+esac
