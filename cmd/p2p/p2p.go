@@ -9,9 +9,10 @@ import (
 	"github.com/p2sub/p2sub/p2p"
 )
 
+var sugar = logger.GetSugarLogger()
+
 //BroadCast messages to network
 func handler(p *p2p.Peer, data []byte) {
-	sugar := logger.GetSugarLogger()
 	sugar.Info("Active peers:", len(p.ActivePeers))
 	for connect, i := range p.ActivePeers {
 		if i {
