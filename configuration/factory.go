@@ -3,20 +3,16 @@ package configuration
 import (
 	"encoding/json"
 	"io/ioutil"
-	"os"
 )
 
 //Import configuration from file
-func Import(filename string) *Config {
-	file, err := os.Open(filename)
-	defer file.Close()
+func Import(filename string) (conf *Config, err error) {
+	fileContent, err := ioutil.ReadFile(filename)
 	if err == nil {
-		if data, err := ioutil.ReadAll(file); err == nil {
-			confs := ConfigJSON{}
-			if json.Unmarshal(data, &confs) == nil {
-				return confs.ToConfig()
-			}
+		bufConf := ConfigJSON{}
+		if json.Unmarshal(fileContent, &bufConf) == nil {
+			conf = bufConf.ToConfig()
 		}
 	}
-	return nil
+	return
 }
