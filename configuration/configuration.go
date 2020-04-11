@@ -112,7 +112,7 @@ func (confJSON *ConfigJSON) ToConfig() *Config {
 
 //ToString convert configuration to string
 func (confJSON *ConfigJSON) ToString() string {
-	if data, err := json.Marshal(confJSON); err == nil {
+	if data, err := json.MarshalIndent(confJSON, "", "  "); err == nil {
 		return string(data)
 	}
 	return "{}"
