@@ -1,6 +1,8 @@
 package utilities
 
-import "crypto/sha256"
+import (
+	"crypto/sha256"
+)
 
 //FastSha256 fast inline sha256()
 func FastSha256(params ...[]byte) []byte {

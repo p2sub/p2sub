@@ -34,6 +34,8 @@ type Peer struct {
 	DataChannel       chan []byte
 }
 
+var sugar = logger.GetSugarLogger()
+
 //SmartCondition type
 type SmartCondition map[string]func()
 
@@ -68,7 +70,6 @@ func getPort(address string) string {
 
 //CreatePeer create a new peer
 func CreatePeer(proto, address string) *Peer {
-	sugar := logger.GetSugarLogger()
 	listener, err := net.Listen(proto, address)
 	port := getPort(address)
 	if err != nil {
@@ -94,7 +95,6 @@ func CreatePeer(proto, address string) *Peer {
 
 //HandleLoop peer main loop
 func (p *Peer) HandleLoop(handler func(p *Peer, data []byte)) {
-	sugar := logger.GetSugarLogger()
 	for {
 		select {
 		case connect := <-p.NewConnections:
@@ -133,7 +133,6 @@ func (p *Peer) HandleLoop(handler func(p *Peer, data []byte)) {
 
 //Connect to another peer
 func (p *Peer) Connect(network, address string) {
-	sugar := logger.GetSugarLogger()
 	bindIPAddress := getIPAddress(p.bindAddress)
 	bindPort := getPort(p.bindAddress)
 	targetIPAddress := getIPAddress(address)
@@ -155,7 +154,6 @@ func (p *Peer) Connect(network, address string) {
 
 //Listen current peer
 func (p *Peer) Listen() {
-	sugar := logger.GetSugarLogger()
 	go func() {
 		for {
 			connect, err := p.listener.Accept()
