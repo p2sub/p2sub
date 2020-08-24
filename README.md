@@ -1,7 +1,7 @@
 # P2Sub
 
 
-[![GoDoc](http://godoc.org/https://github.com/p2sub/p2sub?status.svg)](http://godoc.org/https://github.com/p2sub/p2sub) [![Go Report Card](https://goreportcard.com/badge/https://github.com/p2sub/p2sub)](https://goreportcard.com/report/https://github.com/p2sub/p2sub)
+[![GoDoc](http://godoc.org/github.com/p2sub/p2sub?status.svg)](http://godoc.org/github.com/p2sub/p2sub) [![Go Report Card](https://goreportcard.com/badge/github.com/p2sub/p2sub)](https://goreportcard.com/report/github.com/p2sub/p2sub)
 
 ## License
 
