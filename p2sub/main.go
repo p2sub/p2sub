@@ -49,14 +49,15 @@ func main() {
 	} else {
 		// Load key from json file if existed
 		nodeKey, err = keypair.LoadFromFile(nodeConfigFile)
-		sugar.Debugf("Load key to file: %s", nodeConfigFile)
+		sugar.Debugf("Load key from file: %s", nodeConfigFile)
 		if err != nil {
 			panic(err)
 		}
 	}
 
 	//Setup host with key
-	sugar.Debug("Setup host with given private key")
+	nodeID, _ := nodeKey.GetID()
+	sugar.Debugf("Setup host with given private key, node ID: %s", nodeID)
 	prvKey := nodeKey.GetPrivateKey()
 	host, err := libp2p.New(
 		ctx,
@@ -130,17 +131,18 @@ func main() {
 		}
 		wg.Wait()
 
-		// We use a rendezvous point "meet me here" to announce our location.
+		// We use a rendezvous point `domain` to announce our location.
 		// This is like telling your friends to meet you at the Eiffel Tower.
+		domain := conf.GetDomain()
 		sugar.Info("Announcing ourselves...")
 		routingDiscovery := discovery.NewRoutingDiscovery(kademliaDHT)
-		discovery.Advertise(ctx, routingDiscovery, "FriendZone")
+		discovery.Advertise(ctx, routingDiscovery, domain)
 		sugar.Debug("Successfully announced!")
 
 		// Now, look for others who have announced
 		// This is like your friend telling you the location to meet you.
 		sugar.Debug("Searching for other peers...")
-		peerChan, err := routingDiscovery.FindPeers(ctx, "FriendZone")
+		peerChan, err := routingDiscovery.FindPeers(ctx, domain)
 		if err != nil {
 			panic(err)
 		}
@@ -154,11 +156,11 @@ func main() {
 			err := host.Connect(ctx, curPeer)
 
 			if err != nil {
-				sugar.Warn("Connection failed:", err)
+				//sugar.Warnf("Connection failed: %v", err)
 				continue
 			}
 
-			sugar.Info("Connected to:", curPeer.ID.Pretty())
+			sugar.Infof("Connected to: %s", curPeer.ID.Pretty())
 		}
 	}
 
@@ -169,7 +171,6 @@ func main() {
 	}
 
 	for {
-		sugar.Debug("Topic:", myPubsub.GetTopics())
 		time.AfterFunc(time.Duration(rand.Intn(10))*time.Second, func() {
 			topic.Publish(ctx, []byte(nodeConfigFile))
 		})
@@ -177,7 +178,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		sugar.Debugf("Topic: %s data: %s", msg.GetFrom().String(), string(msg.GetData()))
+		sugar.Debugf("Topic: %s from: %s data: %s", topic.String(), msg.GetFrom().String(), string(msg.GetData()))
 	}
 
 }
