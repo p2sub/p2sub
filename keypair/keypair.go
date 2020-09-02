@@ -21,6 +21,7 @@ import (
 	"os"
 
 	p2pCrypto "github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
 )
 
 // KeyPair structure
@@ -141,6 +142,11 @@ func (k *KeyPair) GetPrivateKey() p2pCrypto.PrivKey {
 // GetPublicKey of this key pair
 func (k *KeyPair) GetPublicKey() p2pCrypto.PubKey {
 	return k.pubKey
+}
+
+// GetID of this key pair
+func (k *KeyPair) GetID() (peer.ID, error) {
+	return peer.IDFromPublicKey(k.GetPublicKey())
 }
 
 // Sign data
