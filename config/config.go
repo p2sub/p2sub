@@ -11,17 +11,34 @@ type Config struct {
 	mutex      sync.Mutex
 }
 
-// Option add new options to config
-type Option func(cfg *Config)
-
 var onceCfg sync.Once
 var cfgInstance *Config
 
-// GetConfig get singleton instance of Config
-func GetConfig() *Config {
+// Option add new options to config
+type Option func(cfg *Config) error
+
+// Apply apply configuration to current configuration
+func (c *Config) Apply(opts ...Option) error {
+	for _, opt := range opts {
+		err := opt(c)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// New config instance and init with empty mapping
+func New() *Config {
+	c := new(Config)
+	c.init()
+	return c
+}
+
+// GetInstance get singleton instance of Config
+func GetInstance() *Config {
 	onceCfg.Do(func() {
-		cfgInstance = new(Config)
-		cfgInstance.init()
+		cfgInstance = New()
 	})
 	return cfgInstance
 }
@@ -32,17 +49,6 @@ func (c *Config) Set(key string, value interface{}) bool {
 	defer c.mutex.Unlock()
 	c.cfgStorage[key] = value
 	return true
-}
-
-func (c *Config) get(key string) (interface{}, error) {
-	if v, ok := c.cfgStorage[key]; ok {
-		return v, nil
-	}
-	return nil, errors.New("This key does not exit")
-}
-
-func (c *Config) init() {
-	c.cfgStorage = make(map[string]interface{})
 }
 
 // GetBool get boolean value from given key
@@ -87,4 +93,15 @@ func (c *Config) GetString(key string) string {
 		}
 	}
 	return ""
+}
+
+func (c *Config) get(key string) (interface{}, error) {
+	if v, ok := c.cfgStorage[key]; ok {
+		return v, nil
+	}
+	return nil, errors.New("This key does not exit")
+}
+
+func (c *Config) init() {
+	c.cfgStorage = make(map[string]interface{})
 }
