@@ -3,6 +3,7 @@ module github.com/p2sub/p2sub
 go 1.14
 
 require (
+	github.com/gorilla/websocket v1.4.2
 	github.com/libp2p/go-libp2p v0.11.0
 	github.com/libp2p/go-libp2p-core v0.6.1
 	github.com/libp2p/go-libp2p-discovery v0.5.0
